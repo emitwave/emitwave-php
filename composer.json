@@ -1,0 +1,24 @@
+{
+    "name": "emitwave/php",
+    "description": "EmitWave server publish SDK (framework-free).",
+    "type": "library",
+    "license": "MIT",
+    "homepage": "https://github.com/mykelcodex/ew/tree/master/packages/php-sdk",
+    "keywords": ["emitwave", "realtime", "publish", "events", "websocket"],
+    "authors": [{ "name": "EmitWave" }],
+    "support": {
+        "issues": "https://github.com/mykelcodex/ew/issues",
+        "source": "https://github.com/mykelcodex/ew"
+    },
+    "require": {
+        "php": "^8.3",
+        "psr/http-client": "^1.0",
+        "psr/http-factory": "^1.0",
+        "nyholm/psr7": "^1.8"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.0"
+    },
+    "autoload": { "psr-4": { "Emitwave\\": "src/" } },
+    "autoload-dev": { "psr-4": { "Emitwave\\Tests\\": "tests/" } }
+}

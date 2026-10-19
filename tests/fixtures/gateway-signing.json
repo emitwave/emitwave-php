@@ -1,0 +1,13 @@
+{
+  "method": "POST",
+  "path": "/apps/app_vec/events",
+  "secret": "sekret_vec",
+  "body": "{\"name\":\"PaymentReceived\",\"channel\":\"orders\",\"data\":{\"amount\":42}}",
+  "query": {
+    "auth_key": "ew_pk_test_vec",
+    "auth_timestamp": "1700000000",
+    "auth_version": "1.0",
+    "body_sha256": "69c84360f211e337bf7bf6cba2f7a45e205c47ad48952e8ae929284013733987"
+  },
+  "signature": "07b0229a57ad4fb6098e4929f63d350e5b7876e42a374eb95e761e89a2529b09"
+}
