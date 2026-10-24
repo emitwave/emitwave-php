@@ -91,7 +91,8 @@ $subscription = $emitwave->subscriptionToken(
 
 For browser connections, pass the request's exact `Origin` as the third
 argument. Emitwave checks it against the application's configured allowed
-origins before minting the token.
+origins before minting the token. An empty allowed-origin list accepts every
+origin; once at least one origin is configured, only exact matches are accepted.
 
 The default client uses cURL plus Nyholm PSR-7 factories.
 
