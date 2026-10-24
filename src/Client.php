@@ -45,17 +45,40 @@ class Client
 
     public function trigger(string $channel, string $event, array $data = []): void
     {
+        $this->post("/apps/{$this->appId}/events", [
+            'name' => $event,
+            'channel' => $channel,
+            'data' => $data,
+        ]);
+    }
+
+    /** @return array{token:string, ttl:int, app_id:string} */
+    public function connectionToken(string $userId, array $info = []): array
+    {
+        return $this->post("/apps/{$this->appId}/connection_tokens", [
+            'user_id' => $userId,
+            'info' => $info,
+        ]);
+    }
+
+    /** @return array{token:string, ttl:int, channel:string, shared_secret?:string} */
+    public function subscriptionToken(string $userId, string $channel, array $info = []): array
+    {
+        return $this->post("/apps/{$this->appId}/subscription_tokens", [
+            'user_id' => $userId,
+            'channel' => $channel,
+            'info' => $info,
+        ]);
+    }
+
+    /** @return array<string, mixed> */
+    private function post(string $path, array $payload): array
+    {
         try {
-            $body = json_encode(
-                ['name' => $event, 'channel' => $channel, 'data' => $data],
-                JSON_THROW_ON_ERROR,
-            );
+            $body = json_encode($payload, JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
-            // A non-encodable payload must fail fast, not silently publish an
-            // empty/garbled body to the gateway.
-            throw new EmitwaveException(0, '', 'Failed to JSON-encode event payload: '.$e->getMessage());
+            throw new EmitwaveException(0, '', 'Failed to JSON-encode request payload: '.$e->getMessage());
         }
-        $path = "/apps/{$this->appId}/events";
         $q = [
             'auth_key' => $this->publicKey,
             'auth_timestamp' => (string) time(),
@@ -77,5 +100,22 @@ class Client
         if ($status < 200 || $status >= 300) {
             throw new EmitwaveException($status, (string) $resp->getBody());
         }
+
+        $responseBody = (string) $resp->getBody();
+        if ($responseBody === '') {
+            return [];
+        }
+
+        try {
+            $decoded = json_decode($responseBody, true, flags: JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            throw new EmitwaveException($status, $responseBody, 'Emitwave returned invalid JSON: '.$e->getMessage());
+        }
+
+        if (! is_array($decoded)) {
+            throw new EmitwaveException($status, $responseBody, 'Emitwave returned an invalid response payload.');
+        }
+
+        return $decoded;
     }
 }

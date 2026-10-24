@@ -1,6 +1,6 @@
 # `emitwave/php`
 
-Framework-independent PHP SDK for publishing signed events to Emitwave.
+Framework-independent PHP SDK for publishing signed events and minting realtime authentication tokens through Emitwave's trusted server API.
 
 ## Requirements
 
@@ -17,8 +17,9 @@ different from the public application key used by browser clients. The SDK
 hashes the exact JSON body and HMAC-signs each publish request; the gateway
 validates the key, timestamp, body hash, and signature before publishing.
 
-Browser clients separately use an end-user Bearer token to obtain a connection
-token and, for authenticated channels, a subscription token.
+Browser clients call their host application's same-origin authentication
+endpoints. The host authenticates its own user, authorizes private channels,
+and uses this SDK to request short-lived connection or subscription tokens.
 
 ## Publishing to channel types
 
@@ -44,27 +45,9 @@ under an encrypted channel name.
 
 ## Installation
 
-The package is currently developed from this monorepo. Add it as a Composer
-path repository while it is unpublished:
-
-```json
-{
-  "repositories": [
-    { "type": "path", "url": "../packages/php-sdk" }
-  ],
-  "require": {
-    "emitwave/php": "@dev"
-  }
-}
-```
-
-Then run:
-
 ```bash
-composer update emitwave/php
+composer require emitwave/php
 ```
-
-After a public release, use `composer require emitwave/php`.
 
 ## Publish an event
 
@@ -87,6 +70,24 @@ $emitwave->trigger('orders', 'order.created', [
     'total' => 4900,
 ]);
 ```
+
+## Mint browser authentication tokens
+
+Call these methods only from an authenticated application backend. The SDK signs the server-to-server request with the application credential; the credential secret never reaches the browser.
+
+```php
+$connection = $emitwave->connectionToken((string) $currentUser->id, [
+    'name' => $currentUser->name,
+]);
+
+$subscription = $emitwave->subscriptionToken(
+    (string) $currentUser->id,
+    'private-account.42',
+    ['name' => $currentUser->name],
+);
+```
+
+`connectionToken()` returns `{token, ttl, app_id}`. `subscriptionToken()` returns `{token, ttl, channel}` after Emitwave validates and scopes the external private or presence channel name. Your application must authorize the user for that channel before requesting its token; use `emitwave/laravel` for built-in same-origin routes and channel callbacks.
 
 The default client uses cURL plus Nyholm PSR-7 factories.
 

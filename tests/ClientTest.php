@@ -68,6 +68,48 @@ class ClientTest extends TestCase
         }
     }
 
+    public function test_connection_token_signs_request_and_returns_gateway_payload(): void
+    {
+        $http = new FakeHttp(200, '{"token":"connection.jwt","ttl":900,"app_id":"app_1"}');
+
+        $result = $this->client($http)->connectionToken('user_42', ['name' => 'Ada']);
+
+        $this->assertSame(['token' => 'connection.jwt', 'ttl' => 900, 'app_id' => 'app_1'], $result);
+        $this->assertSame('/apps/app_1/connection_tokens', $http->last->getUri()->getPath());
+        $this->assertSame([
+            'user_id' => 'user_42',
+            'info' => ['name' => 'Ada'],
+        ], json_decode((string) $http->last->getBody(), true, flags: JSON_THROW_ON_ERROR));
+        $this->assertValidSignature($http->last);
+    }
+
+    public function test_subscription_token_signs_scoped_channel_request(): void
+    {
+        $http = new FakeHttp(200, '{"token":"subscription.jwt","ttl":300,"channel":"private:app_1.user.42"}');
+
+        $result = $this->client($http)->subscriptionToken('user_42', 'private-user.42', ['role' => 'owner']);
+
+        $this->assertSame('subscription.jwt', $result['token']);
+        $this->assertSame('/apps/app_1/subscription_tokens', $http->last->getUri()->getPath());
+        $this->assertSame([
+            'user_id' => 'user_42',
+            'channel' => 'private-user.42',
+            'info' => ['role' => 'owner'],
+        ], json_decode((string) $http->last->getBody(), true, flags: JSON_THROW_ON_ERROR));
+        $this->assertValidSignature($http->last);
+    }
+
+    private function assertValidSignature(RequestInterface $request): void
+    {
+        parse_str($request->getUri()->getQuery(), $query);
+        $body = (string) $request->getBody();
+        $expected = Signer::sign(
+            Signer::canonicalString('POST', $request->getUri()->getPath(), Signer::canonicalQuery($query), Signer::bodySha256($body)),
+            'sekret',
+        );
+        $this->assertSame($expected, $query['auth_signature']);
+    }
+
     public function test_unencodable_payload_throws_not_silently_wrong(): void
     {
         // A non-UTF-8 byte makes json_encode return false; a silently-wrong
