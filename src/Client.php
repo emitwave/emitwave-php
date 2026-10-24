@@ -53,11 +53,14 @@ class Client
     }
 
     /** @return array{token:string, ttl:int, app_id:string} */
-    public function connectionToken(string $userId, array $info = []): array
+    public function connectionToken(string $userId, array $info = [], ?string $origin = null): array
     {
         $payload = ['user_id' => $userId];
         if ($info !== []) {
             $payload['info'] = $info;
+        }
+        if ($origin !== null && $origin !== '') {
+            $payload['origin'] = $origin;
         }
 
         return $this->post("/apps/{$this->appId}/connection_tokens", $payload);

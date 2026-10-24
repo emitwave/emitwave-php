@@ -116,6 +116,19 @@ class ClientTest extends TestCase
         );
     }
 
+    public function test_connection_token_forwards_browser_origin_in_the_signed_body(): void
+    {
+        $http = new FakeHttp(200, '{"token":"connection.jwt","ttl":900,"app_id":"app_1"}');
+
+        $this->client($http)->connectionToken('user_42', [], 'https://toladot.com');
+
+        $this->assertSame(
+            ['user_id' => 'user_42', 'origin' => 'https://toladot.com'],
+            json_decode((string) $http->last->getBody(), true, flags: JSON_THROW_ON_ERROR),
+        );
+        $this->assertValidSignature($http->last);
+    }
+
     private function assertValidSignature(RequestInterface $request): void
     {
         parse_str($request->getUri()->getQuery(), $query);

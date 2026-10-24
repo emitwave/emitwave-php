@@ -78,7 +78,7 @@ Call these methods only from an authenticated application backend. The SDK signs
 ```php
 $connection = $emitwave->connectionToken((string) $currentUser->id, [
     'name' => $currentUser->name,
-]);
+], $requestOrigin);
 
 $subscription = $emitwave->subscriptionToken(
     (string) $currentUser->id,
@@ -88,6 +88,10 @@ $subscription = $emitwave->subscriptionToken(
 ```
 
 `connectionToken()` returns `{token, ttl, app_id}`. `subscriptionToken()` returns `{token, ttl, channel}` after Emitwave validates and scopes the external private or presence channel name. Your application must authorize the user for that channel before requesting its token; use `emitwave/laravel` for built-in same-origin routes and channel callbacks.
+
+For browser connections, pass the request's exact `Origin` as the third
+argument. Emitwave checks it against the application's configured allowed
+origins before minting the token.
 
 The default client uses cURL plus Nyholm PSR-7 factories.
 
