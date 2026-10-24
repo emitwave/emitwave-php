@@ -99,6 +99,23 @@ class ClientTest extends TestCase
         $this->assertValidSignature($http->last);
     }
 
+    public function test_token_requests_omit_empty_info_instead_of_encoding_a_json_array(): void
+    {
+        $connectionHttp = new FakeHttp(200, '{"token":"connection.jwt","ttl":900,"app_id":"app_1"}');
+        $this->client($connectionHttp)->connectionToken('user_42');
+        $this->assertSame(
+            ['user_id' => 'user_42'],
+            json_decode((string) $connectionHttp->last->getBody(), true, flags: JSON_THROW_ON_ERROR),
+        );
+
+        $subscriptionHttp = new FakeHttp(200, '{"token":"subscription.jwt","ttl":300,"channel":"private:app_1.user.42"}');
+        $this->client($subscriptionHttp)->subscriptionToken('user_42', 'private-user.42');
+        $this->assertSame(
+            ['user_id' => 'user_42', 'channel' => 'private-user.42'],
+            json_decode((string) $subscriptionHttp->last->getBody(), true, flags: JSON_THROW_ON_ERROR),
+        );
+    }
+
     private function assertValidSignature(RequestInterface $request): void
     {
         parse_str($request->getUri()->getQuery(), $query);

@@ -55,20 +55,26 @@ class Client
     /** @return array{token:string, ttl:int, app_id:string} */
     public function connectionToken(string $userId, array $info = []): array
     {
-        return $this->post("/apps/{$this->appId}/connection_tokens", [
-            'user_id' => $userId,
-            'info' => $info,
-        ]);
+        $payload = ['user_id' => $userId];
+        if ($info !== []) {
+            $payload['info'] = $info;
+        }
+
+        return $this->post("/apps/{$this->appId}/connection_tokens", $payload);
     }
 
     /** @return array{token:string, ttl:int, channel:string, shared_secret?:string} */
     public function subscriptionToken(string $userId, string $channel, array $info = []): array
     {
-        return $this->post("/apps/{$this->appId}/subscription_tokens", [
+        $payload = [
             'user_id' => $userId,
             'channel' => $channel,
-            'info' => $info,
-        ]);
+        ];
+        if ($info !== []) {
+            $payload['info'] = $info;
+        }
+
+        return $this->post("/apps/{$this->appId}/subscription_tokens", $payload);
     }
 
     /** @return array<string, mixed> */
